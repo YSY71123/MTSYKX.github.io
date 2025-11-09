@@ -1,0 +1,585 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>一份神秘礼物🍊</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: "微软雅黑", sans-serif;
+        }
+        body {
+            background: #f0f5f9;
+            min-height: 100vh;
+            overflow: hidden;
+            position: relative;
+        }
+        /* 弹窗样式 */
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: rgba(0, 0, 0, 0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+        }
+        .modal-content {
+            background: white;
+            border-radius: 8px;
+            padding: 20px;
+            width: 400px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+        .modal-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 15px;
+            color: #333;
+            font-weight: bold;
+            font-size: 18px;
+        }
+        .modal-header .icon {
+            margin-right: 8px;
+        }
+        .modal-body {
+            margin-bottom: 20px;
+            font-size: 16px;
+        }
+        .modal-footer {
+            display: flex;
+            justify-content: flex-end;
+        }
+        .btn {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        .btn-confirm {
+            background: #007bff;
+            color: white;
+            margin-left: 10px;
+        }
+        .btn-cancel {
+            background: #6c757d;
+            color: white;
+        }
+        .card-container {
+            position: absolute;
+            width: 100vw;
+            height: 100vh;
+            top: 0;
+            left: 0;
+            pointer-events: none;
+        }
+        .card {
+            position: absolute;
+            width: 200px;
+            background: white;
+            border-radius: 12px;
+            padding: 15px 20px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            cursor: pointer;
+            pointer-events: auto;
+            z-index: 1;
+            transform-origin: center center;
+            transition: box-shadow 0.3s ease;
+        }
+        .card:hover {
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
+            z-index: 2;
+        }
+        /* 自定义卡片特殊样式 */
+        .card.custom {
+            border: 2px solid #ff4d6d;
+            box-shadow: 0 5px 15px rgba(255, 77, 109, 0.3);
+            background: rgba(255, 240, 245, 0.95);
+        }
+        .card.custom .card-header {
+            color: #ff4d6d;
+        }
+        @keyframes jellyPop {
+            0% { transform: rotate(var(--rotate-init)) scale(1); }
+            30% { transform: rotate(var(--rotate-mid)) scale(1.2); }
+            50% { transform: rotate(var(--rotate-mid)) scale(0.95); }
+            70% { transform: rotate(var(--rotate-end)) scale(1.1); }
+            100% { transform: rotate(var(--rotate-end)) scale(1.05); }
+        }
+        .card.enter {
+            animation: jellyEnter 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+        }
+        @keyframes jellyEnter {
+            0% { transform: rotate(var(--rotate-init)) scale(0.5); opacity: 0; }
+            40% { transform: rotate(var(--rotate-mid)) scale(1.1); opacity: 0.8; }
+            60% { transform: rotate(var(--rotate-mid)) scale(0.9); opacity: 1; }
+            80% { transform: rotate(var(--rotate-end)) scale(1.05); }
+            100% { transform: rotate(var(--rotate-end)) scale(1); }
+        }
+        .card-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 10px;
+            color: #ff6b8a;
+            font-weight: bold;
+            justify-content: center;
+        }
+        .card-header .icon {
+            margin-right: 8px;
+        }
+        .card-content {
+            font-size: 16px;
+            text-align: center;
+            line-height: 1.5;
+        }
+        .auto-status {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: #4CAF50;
+            color: white;
+            border: none;
+            font-size: 14px;
+            cursor: default;
+            box-shadow: 0 4px 10px rgba(76, 175, 80, 0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            padding: 5px;
+            z-index: 999;
+        }
+        .status-tooltip {
+            position: fixed;
+            bottom: 90px;
+            right: 20px;
+            background: rgba(0,0,0,0.7);
+            color: white;
+            padding: 5px 10px;
+            border-radius: 4px;
+            font-size: 12px;
+            opacity: 0;
+            transition: opacity 0.3s;
+            pointer-events: none;
+            z-index: 999;
+        }
+        .auto-status:hover + .status-tooltip {
+            opacity: 1;
+        }
+        /* 隐藏音频播放器的可视化控件（关键修改） */
+        .audioplayer {
+            display: none; /* 直接隐藏包含音频元素的容器 */
+        }
+        /* 自定义卡片按钮 */
+        .custom-card-btn {
+            position: fixed;
+            bottom: 20px;
+            left: 20px;
+            padding: 10px 20px;
+            background: #ff6b8a;
+            color: white;
+            border: none;
+            border-radius: 30px;
+            font-size: 15px;
+            cursor: pointer;
+            box-shadow: 0 4px 12px rgba(255, 107, 138, 0.6);
+            z-index: 999;
+            display: flex;
+            align-items: center;
+            transition: all 0.3s ease;
+        }
+        .custom-card-btn:hover {
+            background: #ff4d6d;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 15px rgba(255, 77, 109, 0.7);
+        }
+        .custom-card-btn .icon {
+            margin-right: 8px;
+            font-size: 16px;
+        }
+        /* 自定义卡片输入框样式 */
+        .custom-input {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #e0e0e0;
+            border-radius: 6px;
+            font-size: 16px;
+            margin-top: 10px;
+            resize: none;
+            height: 120px;
+            transition: border-color 0.3s;
+        }
+        .custom-input:focus {
+            outline: none;
+            border-color: #ff6b8a;
+            box-shadow: 0 0 0 3px rgba(255, 107, 138, 0.1);
+        }
+        .input-hint {
+            font-size: 12px;
+            color: #666;
+            margin-top: 6px;
+            text-align: right;
+        }
+    </style>
+</head>
+<body>
+    <!-- 初始弹窗 -->
+    <div class="modal" id="giftModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <span class="icon">🍊</span>神秘的礼物
+            </div>
+            <div class="modal-body">
+                您有一份神秘礼物，确定要打开吗？
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-confirm" id="confirmBtn">确定</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 自定义卡片弹窗 -->
+    <div class="modal" id="customCardModal" style="display: none;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <span class="icon">💖</span>自定义卡片内容
+            </div>
+            <div class="modal-body">
+                输入你想展示的文字（最多50字）：
+                <textarea class="custom-input" id="customContent" placeholder="例如：祝你每天都开开心心～" maxlength="50"></textarea>
+                <div class="input-hint">已输入 <span id="charCount">0</span>/50 字</div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-cancel" id="cancelCustomBtn">取消</button>
+                <button class="btn btn-confirm" id="confirmCustomBtn">生成卡片</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="card-container" id="cardContainer">
+        <!-- 卡片将通过JS动态生成 -->
+    </div>
+    
+    <!-- 自定义卡片按钮 -->
+    <button class="custom-card-btn" id="customCardBtn" style="display: none;">
+        <span class="icon">✏️</span>自定义卡片
+    </button>
+    
+    <!-- 音频元素：保留功能，隐藏可视化控件 -->
+    <div class="audioplayer">
+        <audio id="backgroundMusic" loop preload="metadata">
+            <!-- 移除 controls 属性，避免显示默认控件（关键修改） -->
+            <source src="music/恶作剧 - 林依晨.mp3" type="audio/mpeg">
+            <source src="https://cdn.staticaly.com/gh/ytzong/music/gh-pages/林依晨%20-%20恶作剧.mp3" type="audio/mpeg">
+            您的浏览器不支持音频播放
+        </audio>
+    </div>
+
+    <script>
+        const giftModal = document.getElementById('giftModal');
+        const confirmBtn = document.getElementById('confirmBtn');
+        const cardContainer = document.getElementById('cardContainer');
+        const backgroundMusic = document.getElementById('backgroundMusic');
+        const customCardBtn = document.getElementById('customCardBtn');
+        const customCardModal = document.getElementById('customCardModal');
+        const customContent = document.getElementById('customContent');
+        const confirmCustomBtn = document.getElementById('confirmCustomBtn');
+        const cancelCustomBtn = document.getElementById('cancelCustomBtn');
+        const charCount = document.getElementById('charCount');
+        
+        const tips = [
+            "我想你了",
+            "你超棒的",
+            "多喝水哦~",
+            "顺顺利利",
+            "别太累啦，偶尔偷懒也好",
+            "愿所有烦恼都消失",
+            "得好好护肤",
+            "今天过得开心嘛",
+            "期待下一次见面",
+            "要相信自己奥",
+            "早点休息，晚安",
+            "今天也要加油呀",
+            "好好吃饭，别亏待自己",
+            "你一笑，世界都亮了",
+            "有你在，很安心"
+        ];
+        const colors = [
+            "rgba(255, 223, 230, 0.9)",
+            "rgba(230, 255, 238, 0.9)",
+            "rgba(230, 245, 255, 0.9)",
+            "rgba(255, 248, 230, 0.9)",
+            "rgba(245, 230, 255, 0.9)"
+        ];
+        // 自定义卡片专属图标
+        const customIcons = ['💖', '✨', '💝', '🥰', '💌', '💕', '💘', '💓'];
+
+        const AUTO_GENERATE_INTERVAL = 100;
+        const MAX_CARD_COUNT = 800;
+        let autoGenerateTimer;
+        let isMusicPlaying = false;
+
+        window.addEventListener('DOMContentLoaded', () => {
+            backgroundMusic.volume = 0.7;
+            tryAutoPlay();
+            listenUserInteraction();
+            bindCustomCardEvents();
+        });
+
+        function tryAutoPlay() {
+            backgroundMusic.play().then(() => {
+                isMusicPlaying = true;
+            }).catch(err => {
+                console.log("初始自动播放需用户交互：", err);
+            });
+        }
+
+        function listenUserInteraction() {
+            const interactionEvents = ['click', 'touchstart', 'keydown'];
+            
+            function handleInteraction() {
+                if (!isMusicPlaying) {
+                    backgroundMusic.play().then(() => {
+                        isMusicPlaying = true;
+                    }).catch(err => {
+                        console.log("播放失败，请检查音乐文件：", err);
+                    });
+                }
+                interactionEvents.forEach(event => {
+                    document.removeEventListener(event, handleInteraction);
+                });
+            }
+            
+            interactionEvents.forEach(event => {
+                document.addEventListener(event, handleInteraction, { once: true });
+            });
+        }
+
+        function ensureMusicPlay() {
+            if (!isMusicPlaying) {
+                backgroundMusic.play().then(() => {
+                    isMusicPlaying = true;
+                });
+            }
+        }
+
+        // 点击确定按钮，隐藏弹窗并初始化卡片
+        confirmBtn.addEventListener('click', () => {
+            giftModal.style.display = 'none';
+            initCards();
+            ensureMusicPlay();
+            // 显示自定义卡片按钮
+            customCardBtn.style.display = 'flex';
+        });
+
+        function initCards() {
+            for (let i = 0; i < 30; i++) {
+                createCard(true);
+            }
+            startAutoGenerate();
+        }
+
+        /**
+         * 创建卡片
+         * @param {boolean} isInit - 是否是初始化创建
+         * @param {string} customText - 自定义文字（可选）
+         */
+        function createCard(isInit = false, customText = '') {
+            if (cardContainer.children.length >= MAX_CARD_COUNT) {
+                stopAutoGenerate();
+                document.querySelector('.auto-status').textContent = '已满';
+                document.querySelector('.status-tooltip').textContent = '已达到最大卡片数量';
+                return;
+            }
+
+            const card = document.createElement('div');
+            card.className = 'card';
+            
+            // 判断是否是自定义卡片
+            const isCustom = customText.trim() !== '';
+            if (isCustom) {
+                card.classList.add('custom');
+            } else {
+                card.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+            }
+            
+            const rotateInit = Math.random() * 30 - 15;
+            const rotateMid = Math.random() * 20 - 10;
+            const rotateEnd = Math.random() * 30 - 15;
+            
+            card.style.setProperty('--rotate-init', `${rotateInit}deg`);
+            card.style.setProperty('--rotate-mid', `${rotateMid}deg`);
+            card.style.setProperty('--rotate-end', `${rotateEnd}deg`);
+            
+            const cardWidth = 200;
+            const cardHeight = 120;
+            const maxLeft = window.innerWidth - cardWidth;
+            const statusHeight = 120;
+            const maxTop = window.innerHeight - cardHeight - statusHeight;
+            
+            card.style.left = `${Math.random() * maxLeft}px`;
+            card.style.top = `${Math.random() * maxTop}px`;
+            card.style.transform = `rotate(${rotateInit}deg)`;
+            
+            // 选择图标
+            const icons = isCustom ? customIcons : ['💖', '✨', '🍊', '🌸', '💐', '🌟', '💝', '🍓', '🥰', '💌'];
+            const randomIcon = icons[Math.floor(Math.random() * icons.length)];
+            
+            const header = document.createElement('div');
+            header.className = 'card-header';
+            header.innerHTML = `<span class="icon">${randomIcon}</span>${isCustom ? '我的心意' : '提示'}`;
+            
+            const content = document.createElement('div');
+            content.className = 'card-content';
+            // 使用自定义文字或随机提示文字
+            content.textContent = isCustom ? customText : tips[Math.floor(Math.random() * tips.length)];
+            
+            card.appendChild(header);
+            card.appendChild(content);
+            cardContainer.appendChild(card);
+
+            setTimeout(() => {
+                card.classList.add('enter');
+            }, isInit ? Math.random() * 500 : 10);
+
+            card.addEventListener('click', () => {
+                const currentZIndex = parseInt(card.style.zIndex) || 1;
+                card.style.zIndex = currentZIndex + 10;
+                
+                ensureMusicPlay();
+                
+                const newRotateInit = Math.random() * 30 - 15;
+                const newRotateMid = Math.random() * 20 - 10;
+                const newRotateEnd = Math.random() * 30 - 15;
+                
+                card.style.setProperty('--rotate-init', `${newRotateInit}deg`);
+                card.style.setProperty('--rotate-mid', `${newRotateMid}deg`);
+                card.style.setProperty('--rotate-end', `${newRotateEnd}deg`);
+                
+                card.style.animation = 'none';
+                card.offsetHeight; // 触发重绘
+                card.style.animation = 'jellyPop 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards';
+            });
+        }
+
+        function startAutoGenerate() {
+            autoGenerateTimer = setInterval(() => {
+                createCard();
+            }, AUTO_GENERATE_INTERVAL);
+        }
+
+        function stopAutoGenerate() {
+            clearInterval(autoGenerateTimer);
+        }
+
+        window.addEventListener('resize', () => {
+            const cards = document.querySelectorAll('.card');
+            const cardWidth = 200;
+            const cardHeight = 120;
+            const statusHeight = 120;
+            
+            cards.forEach(card => {
+                const maxLeft = window.innerWidth - cardWidth;
+                const maxTop = window.innerHeight - cardHeight - statusHeight;
+                
+                let left = parseInt(card.style.left) || 0;
+                let top = parseInt(card.style.top) || 0;
+                
+                if (left > maxLeft) left = Math.random() * maxLeft;
+                if (top > maxTop) top = Math.random() * maxTop;
+                
+                card.style.left = `${left}px`;
+                card.style.top = `${top}px`;
+            });
+        });
+
+        /**
+         * 绑定自定义卡片相关事件
+         */
+        function bindCustomCardEvents() {
+            // 文字输入计数
+            customContent.addEventListener('input', () => {
+                const length = customContent.value.length;
+                charCount.textContent = length;
+                // 超过字数时变色提醒
+                if (length > 50) {
+                    charCount.style.color = '#ff4d6d';
+                } else {
+                    charCount.style.color = '#666';
+                }
+            });
+
+            // 点击自定义卡片按钮，显示弹窗
+            customCardBtn.addEventListener('click', () => {
+                customCardModal.style.display = 'flex';
+                customContent.value = '';
+                charCount.textContent = '0';
+                charCount.style.color = '#666';
+                customContent.focus();
+                ensureMusicPlay();
+            });
+            
+            // 取消自定义卡片
+            cancelCustomBtn.addEventListener('click', () => {
+                customCardModal.style.display = 'none';
+            });
+            
+            // 确认生成自定义卡片
+            confirmCustomBtn.addEventListener('click', () => {
+                const text = customContent.value.trim();
+                if (text === '') {
+                    alert('请输入卡片内容哦～');
+                    return;
+                }
+                if (text.length > 50) {
+                    alert('文字不能超过50个字呢～');
+                    return;
+                }
+                
+                // 生成自定义卡片
+                createCard(false, text);
+                customCardModal.style.display = 'none';
+                
+                // 简单的生成成功提示
+                const toast = document.createElement('div');
+                toast.style.position = 'fixed';
+                toast.style.top = '20px';
+                toast.style.left = '50%';
+                toast.style.transform = 'translateX(-50%)';
+                toast.style.backgroundColor = 'rgba(0,0,0,0.7)';
+                toast.style.color = 'white';
+                toast.style.padding = '8px 16px';
+                toast.style.borderRadius = '4px';
+                toast.style.fontSize = '14px';
+                toast.style.zIndex = '9999';
+                toast.textContent = '自定义卡片生成成功！';
+                document.body.appendChild(toast);
+                
+                setTimeout(() => {
+                    toast.style.opacity = '0';
+                    toast.style.transition = 'opacity 0.3s';
+                    setTimeout(() => {
+                        document.body.removeChild(toast);
+                    }, 300);
+                }, 1500);
+            });
+
+            // 点击弹窗外部关闭
+            customCardModal.addEventListener('click', (e) => {
+                if (e.target === customCardModal) {
+                    customCardModal.style.display = 'none';
+                }
+            });
+        }
+    </script>
+</body>
+</html>
